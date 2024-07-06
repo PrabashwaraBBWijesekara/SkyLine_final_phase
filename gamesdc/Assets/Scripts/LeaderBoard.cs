@@ -7,6 +7,9 @@ using UnityEngine.SceneManagement;
 using System.Collections;
 using UnityEngine.UI;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
+using System;
+using Random = UnityEngine.Random;
 
 public class LeaderBoard : MonoBehaviour
 {
@@ -19,6 +22,13 @@ public class LeaderBoard : MonoBehaviour
     private readonly string profileViewEndpoint = "http://20.15.114.131:8080/api/user/profile/view";
 
     private string authenticatedUsername;
+    private string jwt_newone;
+    private string id_value_string;
+    public static string playerLoginJWTToken;
+    public static string playerIDvalue;
+    public static int initial_gems_value;
+    public static int initial_coins_value;
+    public static int condition_check_value;
 
     public static int coins_count = 50;
     public static int gems_count = 9;
@@ -26,8 +36,10 @@ public class LeaderBoard : MonoBehaviour
 
     private async void Start()
     {
+        
         string jwtToken = postmethod.jwtToken;  // Get the JWT token from postmethod
-
+        StartCoroutine(SendLoginRequest());
+       
         if (!string.IsNullOrEmpty(jwtToken) && jwtToken != "nulljwtToken")
         {
             ShowLoadingScreen(true);
@@ -40,6 +52,173 @@ public class LeaderBoard : MonoBehaviour
             Debug.LogError("JWT token is invalid. Authentication failed.");
         }
     }
+    IEnumerator SendLoginRequest()
+    {
+        string username = postmethod.username_var;
+        string password = postmethod.password;
+        Debug.Log("The username is "+ "and password is"+password);
+
+        var data = new
+        {
+            username = username,
+            password = password
+        };
+
+        string jsonData = JsonConvert.SerializeObject(data);
+        byte[] bodyRaw = System.Text.Encoding.UTF8.GetBytes(jsonData);
+
+        using (UnityWebRequest request = UnityWebRequest.PostWwwForm("http://localhost:8081/api/v1/player/log", jsonData))
+        {
+            request.uploadHandler = (UploadHandler)new UploadHandlerRaw(bodyRaw);
+            request.downloadHandler = (DownloadHandler)new DownloadHandlerBuffer();
+            request.SetRequestHeader("Content-Type", "application/json");
+
+            yield return request.SendWebRequest();
+
+            if (request.result != UnityWebRequest.Result.Success)
+            {
+                Debug.LogError(request.error);
+            }
+            else
+            {
+                string response = request.downloadHandler.text;
+                JObject jsonResponse = JObject.Parse(response);
+                jwt_newone = (string)jsonResponse["token"];
+                playerLoginJWTToken = jwt_newone;
+                int id_value = (int)jsonResponse["id"];
+                id_value_string = id_value.ToString();
+                playerIDvalue = id_value_string;
+                Debug.Log("The Spring Backend token is" + jwt_newone + "and Player ID is " + id_value);
+                //updatePlayerStatus();
+                string url = "http://localhost:8081/api/v1/player/answer/" + id_value_string;
+                StartCoroutine(SendPlayerStatusGettingRequest(url, jwt_newone));
+            }
+        }
+    }
+    public IEnumerator SendPlayerStatusGettingRequest(string url, string jwt_newone)
+    {
+        using (UnityWebRequest requestForCheckingQADone = UnityWebRequest.Get(url))
+        {
+            requestForCheckingQADone.SetRequestHeader("Authorization", "Bearer " + jwt_newone);
+
+            yield return requestForCheckingQADone.SendWebRequest();
+
+            if (requestForCheckingQADone.result != UnityWebRequest.Result.Success)
+            {
+                Debug.LogError(requestForCheckingQADone.error);
+                yield break;
+            }
+
+            string jsonResponse = requestForCheckingQADone.downloadHandler.text;
+            Debug.Log("Response: " + jsonResponse);
+
+            try
+            {
+                JObject responseJson = JObject.Parse(jsonResponse);
+                Debug.Log("This is all json object parse" + responseJson);
+
+                // Get the "content" object
+                JObject content = (JObject)responseJson["content"];
+
+                // Access "totalCoins" from "content"
+                int totalCoins = (int)content["totalCoins"];
+
+                // Access "playerStatus" from "content"
+                JObject playerStatus = (JObject)content["playerStatus"];
+
+                // Access specific properties within "playerStatus" (if needed)
+                int playerStatusCoins = (int)playerStatus["coins"];
+                int playerStatusGems = (int)playerStatus["gems"];
+
+                // Log the playerStatus object (optional)
+                Debug.Log("Response: player status" + playerStatus);
+                // Correcting the path to access resources within playerStatus
+                if (playerStatus == null)
+                {// I want to player Status was null check valued assigned as 1
+
+                    condition_check_value = 1;
+                   
+                    //gemsCount.text = totalCoins.ToString();
+                    initial_coins_value = 100;
+                    //coinsCount.text = "100";
+                   
+                    JObject playerData = new JObject(
+                        new JProperty("coins", 0),
+                        new JProperty("gems", 0),
+                        new JProperty("resources", new JArray())  // Ensure the array is initialized correctly.
+                    );
+
+                    Debug.Log("Test null or not player ");
+
+
+                    int playerId;
+                    if (!int.TryParse(CheckinPlayDirectly.playerIDvalue, out playerId))
+                    {
+                        Debug.LogError("Invalid player ID");
+                    }
+                    else
+                    {
+                        // StartCoroutine(PlayerStatusSave("http://localhost:8081/api/playerstatus/savestatus", CheckinPlayDirectly.playerLoginJWTToken, playerId, playerData));
+                    }
+
+                }
+                else
+                {
+                    condition_check_value = 0;
+                }
+                if (responseJson["content"]?["playerStatus"]?["resources"] != null)
+                {
+                    JArray resourcesArray = (JArray)responseJson["content"]["playerStatus"]["resources"];
+                    if (resourcesArray.Count > 0)
+                    {
+                        string resourcesString = resourcesArray[0].ToString();  // Assuming there's at least one item in the array
+                        JObject resourceObject = JObject.Parse(resourcesString);
+
+
+                        // Extracting specific values from the 'resourceObject'
+                        double playerPositionX = (double)resourceObject["playerPositionX"];
+                        double playerPositionY = (double)resourceObject["playerPositionY"];
+                        float playerPositionX_floatvalue = Convert.ToSingle(playerPositionX);
+                        float playerPositionY_floatvalue = Convert.ToSingle(playerPositionY);
+                        int coinscount = (int)resourceObject["coinscount"];
+                        //initialCoinsValue = coinscount;
+                        int gemscount = (int)resourceObject["gemscount"];
+                        initial_gems_value = gemscount;
+                        string time = (string)resourceObject["time"];
+                        string date = (string)resourceObject["date"];
+                        coins_count = coinscount;
+                        gems_count = gemscount;
+
+
+    // Debugging the values
+    Debug.Log($"Extracted Values:\nPlayer Position X: {playerPositionX}\nPlayer Position Y: {playerPositionY}\nCoins Count: {coinscount}\nTime: {time}\nDate: {date}");
+                        string json = PlayerPrefs.GetString("PlayerPosition");
+                        GameData data = JsonUtility.FromJson<GameData>(json);
+                        Debug.Log("Loaded Data: " + json); // Check what is being loaded
+                        
+
+                    
+
+                    }
+                    else
+                    {
+                        Debug.Log("No resources found in the response.");
+                    }
+                }
+                else
+                {
+                    Debug.Log("No 'resources' field found in the response or 'playerStatus' is null.");
+                }
+            }
+            catch (Exception e)
+            {
+               
+            }
+        }
+        
+
+    }
+
 
     private void Awake()
     {
@@ -239,7 +418,7 @@ public class LeaderBoard : MonoBehaviour
         if (loadingScreen != null)
         {
             loadingScreen.SetActive(show);
-            
+
         }
     }
 
@@ -262,3 +441,4 @@ public class LeaderBoard : MonoBehaviour
         public int score;
     }
 }
+

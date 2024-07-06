@@ -160,6 +160,8 @@ public class PlayerMovements : MonoBehaviour
         int gemscount_val= ItemCollector.gems;
         string time_json = timeLastplay;
         string date_json = dateLastplay;
+        coinscount_val = 121;
+        gemscount_val = 4;
 
         // Construct game data object using variables
         var gameData = new

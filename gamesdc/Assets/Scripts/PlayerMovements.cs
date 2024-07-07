@@ -23,6 +23,7 @@ public class PlayerMovements : MonoBehaviour
     [SerializeField] private Text gemsCount; // SerializeField for editor access
     public Button pauseButton;
     public Button resumeButton;
+    public Button leaderboardButton;
     public static int initial_gems_value;
     public static int initial_coins_value;
     public static int condition_check_value;
@@ -62,6 +63,7 @@ public class PlayerMovements : MonoBehaviour
         // Add listeners to the buttons
         pauseButton.onClick.AddListener(OnPauseButtonClick);
         resumeButton.onClick.AddListener(OnResumeButtonClick);
+        leaderboardButton.onClick.AddListener(leaderboard_button);
     }
     private void OnPauseButtonClick()
     {
@@ -81,6 +83,13 @@ public class PlayerMovements : MonoBehaviour
         // Hide the resume button and show the pause button
         resumeButton.gameObject.SetActive(false);
         pauseButton.gameObject.SetActive(true);
+    }
+    public void leaderboard_button()
+    {
+        Debug.Log("Your Posision is");
+        SaveGameForLeaderbord();
+        SceneManager.LoadScene("Leaderboard");
+
     }
     private void Update()
     {
@@ -160,8 +169,10 @@ public class PlayerMovements : MonoBehaviour
         int gemscount_val= ItemCollector.gems;
         string time_json = timeLastplay;
         string date_json = dateLastplay;
-        coinscount_val = 121;
-        gemscount_val = 4;
+       // coinscount_val = 121;
+       // gemscount_val = 4;
+        //playerPosition_X =40;
+       // playerPosition_Y = 10;
 
         // Construct game data object using variables
         var gameData = new
@@ -500,6 +511,25 @@ public class PlayerMovements : MonoBehaviour
         dateLastplay = now_date.ToShortDateString();
         SavePosition();
         Time.timeScale = 0; // Pause the game
+    }
+    public void SaveGameForLeaderbord()
+    {
+        isPaused = true;  // Set the game as paused
+        Debug.Log("Check when pause is true");
+
+
+        DateTime now_time = DateTime.Now;
+
+        // Log the current time to the console
+        Debug.Log("Current Time: " + now_time.ToShortTimeString());
+        DateTime now_date = DateTime.Now;
+        timeLastplay = now_time.ToShortTimeString();
+
+        // Log the current date to the console
+        Debug.Log("Current Date: " + now_date.ToShortDateString());
+        dateLastplay = now_date.ToShortDateString();
+        SavePosition();
+        //Time.timeScale = 0; // Pause the game
     }
 
     public void ResumeGame()

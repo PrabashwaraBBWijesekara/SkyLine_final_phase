@@ -537,39 +537,45 @@ public class EnergySavingsAlgorithm : MonoBehaviour
         if (condition == "Excellent")
         {
             PopupMessageUI.Instance
-                    .SetTitle("Excellent")
-                    .SetMessage("You are gifted " + finalScore + " coins")
-                    .SetReward(true)
-                    .Show();
+                .SetTitle("Excellent")
+                .SetMessage("You are gifted " + finalScore + " coins")
+                .SetReward(true)
+                .Show();
         }
         else if (condition == "Good")
         {
             PopupMessageUI.Instance
-                    .SetTitle("Good")
-                    .SetMessage("Acceptable consumption!!\n "+ "You are gifted " + finalScore + " coins")
-                    .SetReward(true)
-                    .Show();
+                .SetTitle("Good")
+                .SetMessage("Acceptable consumption!!\n " + "You are gifted " + finalScore + " coins")
+                .SetReward(true)
+                .Show();
         }
         else if (condition == "Worse")
         {
             PopupMessageUI.Instance
-                    .SetTitle("Bad")
-                    .SetMessage("You have wasted energy!!\n "+"You are gifted " + finalScore + " coins")
-                    .SetReward(false)
-                    .Show();
+                .SetTitle("Bad")
+                .SetMessage("You have wasted energy!!\n " + "You are gifted " + finalScore + " coins")
+                .SetReward(false)
+                .Show();
         }
-
 
         if (coinprefab == null)
         {
-            return; // Skip gem generation if the prefab is null or destroyed.
+            return; // Skip coin generation if the prefab is null or destroyed.
         }
 
         for (int i = 0; i < finalScore; i++)
         {
-            Vector3 randomPosition = coinspawner.transform.position + UnityEngine.Random.insideUnitSphere * radius;
-            Instantiate(coinprefab, randomPosition, Quaternion.identity);
-
+            if (coinspawner != null) // Check if coinspawner is not null
+            {
+                Vector3 randomPosition = coinspawner.transform.position + UnityEngine.Random.insideUnitSphere * radius;
+                Instantiate(coinprefab, randomPosition, Quaternion.identity);
+            }
+            else
+            {
+                Debug.LogWarning("Coin spawner object is destroyed or missing.");
+                break; // Exit the loop if the coinspawner is null
+            }
         }
     }
 

@@ -5,6 +5,7 @@ using System.Net;
 using System.Text;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.SocialPlatforms.Impl;
 
 public class backmethod : MonoBehaviour
 {
@@ -41,6 +42,17 @@ public class backmethod : MonoBehaviour
     
     SceneManager.LoadScene("MainMenu");
     
+    }
+    public void GoAgainGame()
+    {
+
+        SceneManager.LoadScene("Garden");
+
+    }
+
+    public void GoSuitableScene() {
+
+        SceneManager.LoadScene("Garden");
     }
     public void GoForwardMenu()
     {

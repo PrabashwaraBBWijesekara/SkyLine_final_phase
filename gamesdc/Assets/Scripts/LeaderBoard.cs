@@ -296,7 +296,7 @@ public class LeaderBoard : MonoBehaviour
                     }
                     else
                     {
-                        coins = Random.Range(0, 100);
+                        coins = Random.Range(0, 150);
                         gems = Random.Range(0, 10);
                     }
 
@@ -440,5 +440,6 @@ public class LeaderBoard : MonoBehaviour
         public string name;
         public int score;
     }
+   
 }
 
